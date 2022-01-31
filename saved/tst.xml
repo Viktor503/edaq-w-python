@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<Measurement>
+	<Sensor type="Thermistor">
+		<Name/>
+		<Quantity>U</Quantity>
+		<Unit>V</Unit>
+		<Coefficient unit="K">3977</Coefficient>
+		<Reference>
+			<Temperature unit="K">298,15</Temperature>
+			<Resistance unit="Ω">10000</Resistance>
+		</Reference>
+		<ProbeResistance unit="Ω">10000</ProbeResistance>
+	</Sensor>
+	<Sensor type="Linear">
+		<Name/>
+		<Quantity>U</Quantity>
+		<Unit>V</Unit>
+		<Intercept>0</Intercept>
+		<Slope>1</Slope>
+	</Sensor>
+	<Sensor type="Linear">
+		<Name/>
+		<Quantity>U</Quantity>
+		<Unit>V</Unit>
+		<Intercept>0</Intercept>
+		<Slope>1</Slope>
+	</Sensor>
+</Measurement>

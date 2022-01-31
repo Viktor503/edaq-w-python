@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<Sensor type="Linear">
+	<Name>Janetta</Name>
+	<Quantity/>
+	<Unit>V</Unit>
+	<Intercept>0</Intercept>
+	<Slope>1</Slope>
+</Sensor>

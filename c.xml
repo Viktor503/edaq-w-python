@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<Sensor type="Thermistor">
+	<Name>Jeromos</Name>
+	<Quantity>T</Quantity>
+	<Unit>°C</Unit>
+	<Coefficient unit="K">3977</Coefficient>
+	<Reference>
+		<Temperature unit="K">298,15</Temperature>
+		<Resistance unit="Ω">105</Resistance>
+	</Reference>
+	<ProbeResistance unit="Ω">10000</ProbeResistance>
+</Sensor>
