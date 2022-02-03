@@ -31,8 +31,6 @@ class some(Settings):
         self.ax2.locator_params(nbins=self.ax2NumOfPins)
         self.ax3.locator_params(nbins=self.ax3NumOfPins)
 
-        self.setlabels(True,True,True)
-
         self.data = DataManager()
         self.settings = Settings()
 
@@ -124,21 +122,22 @@ class some(Settings):
         #start the animation
         self.ani = animation.FuncAnimation(self.fig, self.UpdatePlot, interval=5, blit=False, repeat=False)
         self.setuptkinter()
+        #self.HideSubplot(None)
 
         #start the Datarequest
         Thread(target=self.UpdateData).start()
         self.root.mainloop()
 
-    def setlabels(self,first,second,third):
-        if first:
-            self.ax.set_xlabel(self.title.get())
-            self.ax.set_ylabel(self.ax1Ylabel)
-        if second:
-            self.ax2.set_xlabel(self.title.get())
-            self.ax2.set_ylabel(self.ax2Ylabel)
-        if third:
-            self.ax3.set_xlabel(self.title.get())
-            self.ax3.set_ylabel(self.ax3Ylabel)
+    def setlabels(*args):
+        if "A" in args[0].ShownColumns:
+            args[0].ax.set_xlabel(args[0].title.get())
+            args[0].ax.set_ylabel(args[0].ax1Ylabel)
+        if "B" in args[0].ShownColumns:
+            args[0].ax2.set_xlabel(args[0].title.get())
+            args[0].ax2.set_ylabel(args[0].ax2Ylabel)
+        if "C" in args[0].ShownColumns:
+            args[0].ax3.set_xlabel(args[0].title.get())
+            args[0].ax3.set_ylabel(args[0].ax3Ylabel)
 
     def ManageSamplingFreq(*args):
         try:
@@ -262,7 +261,7 @@ class some(Settings):
                 args[0].ax3Ylabel = "U [V]"
             else:
                 args[0].ax3Ylabel = args[0].Channel3Quantityvar.get() + " [" + args[0].Channel3Unit.get() + "]"
-        args[0].setlabels(True,True,True)
+        args[0].setlabels()
 
     def hide_chart(self):
         if self.visible:
@@ -431,7 +430,7 @@ class some(Settings):
             self.line3levelcrossingmin,  = self.ax3.plot([],[], color="red", linestyle="-")
             self.line3levelcrossingmax,  = self.ax3.plot([],[], color="red", linestyle="-")
 
-        self.setlabels(True,True,True)
+        self.setlabels()
 
     def ManageLevelCrossingLines(*args):
         args[0].HideSubplot(None)
@@ -723,6 +722,11 @@ class some(Settings):
         except:
             pass
 
+    def load_measurements(self):
+        self.settings.LoadSettings()
+        self.clear_data()
+        self.HideSubplot(None)
+
 
     def setuptkinter(self):
         #setting up visual and interactive elements
@@ -772,7 +776,7 @@ class some(Settings):
 
         self.filemenu.add_cascade(label="Load sensor from file...",menu=self.LoadSensorMenu)
         self.filemenu.add_command(label="Save Measurment setup...   Ctrl+S",command=self.settings.SaveSettings)
-        self.filemenu.add_command(label="Load Measurment setup...   Ctrl+L",command=self.settings.LoadSettings)
+        self.filemenu.add_command(label="Load Measurment setup...   Ctrl+L",command=self.load_measurements)
         self.filemenu.add_command(label="Save Measurment data...    Ctrl+D",command=lambda: self.data.save_data(self.settings.ShownColumns,"txt"))
         self.menubar.add_cascade(label="File",menu=self.filemenu)
 

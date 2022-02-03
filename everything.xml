@@ -11,11 +11,11 @@
 	<ChannelSettings>
 		<Name>A</Name>
 		<IsActive>True</IsActive>
-		<IsAutoscaled>False</IsAutoscaled>
-		<YMin>0.0</YMin>
-		<YMax>2.0</YMax>
-		<Colour description="Colour [R=255, G=166, B=0]"/>
-		<SensorInterfacing label="voltage">0</SensorInterfacing>
+		<IsAutoscaled>True</IsAutoscaled>
+		<YMin>-1.0</YMin>
+		<YMax>3.0</YMax>
+		<Colour description="Colour [R=0, G=0, B=255]"/>
+		<SensorInterfacing label="resistor">1</SensorInterfacing>
 		<Sensor type="Linear">
 			<Name>Jani</Name>
 			<Quantity/>
@@ -36,7 +36,7 @@
 		<IsAutoscaled>True</IsAutoscaled>
 		<YMin>-1.0</YMin>
 		<YMax>6.0</YMax>
-		<Colour description="Colour [R=0, G=291, B=3]"/>
+		<Colour description="Colour [R=0, G=255, B=3]"/>
 		<SensorInterfacing label="resistor">1</SensorInterfacing>
 		<Sensor type="Linear">
 			<Name>Janetta</Name>
@@ -58,7 +58,7 @@
 		<IsAutoscaled>True</IsAutoscaled>
 		<YMin>-1.0</YMin>
 		<YMax>6.0</YMax>
-		<Colour description="Colour [R=4, G=190, B=469]"/>
+		<Colour description="Colour [R=4, G=190, B=255]"/>
 		<SensorInterfacing label="voltage">0</SensorInterfacing>
 		<Sensor type="Thermistor">
 			<Name>Jeromos</Name>

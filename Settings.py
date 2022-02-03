@@ -65,7 +65,7 @@ class Settings():
         self.visible = True
 
         #toggle the columns that are shown
-        self.ShownColumns = ["t","A","B"]
+        self.ShownColumns = ["t","B","C"]
 
         #Popup windows for demo settings
         self.AWindow = None
@@ -125,12 +125,12 @@ class Settings():
         #setting automatic y axis scaling
         self.automatic_scaleA = IntVar(name="AutomaticScaleA",value=0)
         self.automatic_scaleB = IntVar(name="AutomaticScaleB",value=1)
-        self.automatic_scaleC = IntVar(name="AutomaticScaleC",value=1)
+        self.automatic_scaleC = IntVar(name="AutomaticScaleC",value=0)
 
         #Level crossing detection variables
         self.LevelcrossingonA = IntVar(name="LevelCrossingOnA",value=1)
         self.LevelcrossingonB = IntVar(name="LevelCrossingOnB",value=0)
-        self.LevelcrossingonC = IntVar(name="LevelCrossingOnC",value=0)
+        self.LevelcrossingonC = IntVar(name="LevelCrossingOnC",value=1)
 
         self.LevelCrossingLevelAvar = DoubleVar(value=1.0,name="Alevel") 
         self.LevelCrossingLevelBvar = DoubleVar(value=2.0,name="Blevel")
@@ -358,7 +358,7 @@ class Settings():
         Ymax1 = self.AddElement(Root,Channel1Settings,"YMax",self.ylimitAtop)
         rgb1 = [int(self.line1Color[i+1:i+3],16) for i in range(0,5,2)]
         color1 = self.AddElementWAttr(Root,Channel1Settings,"Colour",{"description":"Colour [R={}, G={}, B={}]".format(rgb1[0],rgb1[1],rgb1[2])},"")
-        sensorinterface = self.AddElementWAttr(Root,Channel1Settings,"SensorInterfacing",{"label":self.Channel1TypeString.get()},self.Channel1Type)
+        sensorinterface = self.AddElementWAttr(Root,Channel1Settings,"SensorInterfacing",{"label":self.Channel1Typevar.get()},self.Channel1Type)
 
         #Sensor settings
         sensora = self.SaveA(False)
@@ -390,7 +390,7 @@ class Settings():
         Ymax2 = self.AddElement(Root,Channel2Settings,"YMax",self.ylimitBtop)
         rgb2 = [int(self.line2Color[i+1:i+3],26) for i in range(0,5,2)]
         color2 = self.AddElementWAttr(Root,Channel2Settings,"Colour",{"description":"Colour [R={}, G={}, B={}]".format(rgb2[0],rgb2[1],rgb2[2])},"")
-        sensorinterface = self.AddElementWAttr(Root,Channel2Settings,"SensorInterfacing",{"label":self.Channel2TypeString.get()},self.Channel2Type)
+        sensorinterface = self.AddElementWAttr(Root,Channel2Settings,"SensorInterfacing",{"label":self.Channel2Typevar.get()},self.Channel2Type)
 
         sensorb = self.SaveB(False)
         Channel2Settings.appendChild(sensorb)
@@ -421,7 +421,7 @@ class Settings():
         Ymax3 = self.AddElement(Root,Channel3Settings,"YMax",self.ylimitCtop)
         rgb3 = [int(self.line3Color[i+1:i+3],36) for i in range(0,5,2)]
         color3 = self.AddElementWAttr(Root,Channel3Settings,"Colour",{"description":"Colour [R={}, G={}, B={}]".format(rgb3[0],rgb3[1],rgb3[2])},"")
-        sensorinterface = self.AddElementWAttr(Root,Channel3Settings,"SensorInterfacing",{"label":self.Channel3TypeString.get()},self.Channel3Type)
+        sensorinterface = self.AddElementWAttr(Root,Channel3Settings,"SensorInterfacing",{"label":self.Channel3Typevar.get()},self.Channel3Type)
 
         sensorc = self.SaveC(False)
         Channel3Settings.appendChild(sensorc)
@@ -584,7 +584,41 @@ class Settings():
         self.timeframepoints = int(data["Points"][1])
         self.timeframepointsvar.set(self.timeframepoints)
 
-        print(data)
+        curchannel = 1
+        self.ShownColumns = ["t"]
+        for i in Root.findall("ChannelSettings"):
+            curdata = dict()
+            for j in i:
+                curdata[j.tag] = [j.attrib,j.text]
+            
+            if curchannel == 1:
+                if curdata["IsActive"][1] == "True":
+                    self.ShownColumns.append("A")
+
+                if curdata["IsAutoscaled"][1] == "True":
+                    self.automatic_scaleA.set(1)
+                elif curdata["IsAutoscaled"][1] == "False":
+                    self.automatic_scaleA.set(0)
+
+                self.ylimitAbot = float(curdata["YMin"][1])
+                self.ylimitAbotvar.set(self.ylimitAbot)
+
+                self.ylimitAtop = float(curdata["YMax"][1])
+                self.ylimitAtopvar.set(self.ylimitAtop)
+
+                colorstring = curdata["Colour"][0]["description"]
+                colorlist = [x.split("=")[-1] for x in colorstring.split(",")]
+                colorlist = [int(x.split("]")[0]) for x in colorlist]
+                newcolor = "#%02x%02x%02x" % (colorlist[0],colorlist[1],colorlist[2])
+                self.line1Color = newcolor
+
+                self.Channel1Type = int(curdata["SensorInterfacing"][1])
+                self.Channel1Typevar.set(curdata["SensorInterfacing"][0]["label"])
+
+                print(self.Channel1Typevar,self.Channel1Type)
+
+            curchannel += 1
+        
 
 
 
