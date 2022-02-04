@@ -21,33 +21,12 @@ class some(Settings):
         Settings.__init__(self)
         self.fig = plt.figure()
 
-        #initializing channel subplots
-        self.ax = self.fig.add_subplot(311)
-        self.ax2 = self.fig.add_subplot(312)
-        self.ax3 = self.fig.add_subplot(313)
-
-        #setting the number of pins on the subplots
-        self.ax.locator_params(nbins=self.axNumOfPins)
-        self.ax2.locator_params(nbins=self.ax2NumOfPins)
-        self.ax3.locator_params(nbins=self.ax3NumOfPins)
-
         self.data = DataManager()
         self.settings = Settings()
 
-        #setting up the lines for the plots
-        self.line,  = self.ax.plot([],[], color=self.settings.line1Color, linestyle="-")
-        self.line2,  = self.ax2.plot([],[], color=self.settings.line2Color, linestyle="-")
-        self.line3,  = self.ax3.plot([],[], color=self.settings.line3Color, linestyle="-")
-
-        self.linelevelcrossingmin,  = self.ax.plot([],[], color="red", linestyle="-")
-        self.linelevelcrossingmax,  = self.ax.plot([],[], color="red", linestyle="-")       
-
-        self.line2levelcrossingmin,  = self.ax2.plot([],[], color="red", linestyle="-")
-        self.line2levelcrossingmax,  = self.ax2.plot([],[], color="red", linestyle="-")       
-
-        self.line3levelcrossingmin,  = self.ax3.plot([],[], color="red", linestyle="-")
-        self.line3levelcrossingmax,  = self.ax3.plot([],[], color="red", linestyle="-")       
-
+        #initializing channel subplots and number of pins
+        self.displaySubplots()
+        
         self.settings.Channel1Typevar.trace("w",self.ManageChannelTypes)
         self.settings.Channel2Typevar.trace("w",self.ManageChannelTypes)
         self.settings.Channel3Typevar.trace("w",self.ManageChannelTypes)
@@ -122,20 +101,18 @@ class some(Settings):
         #start the animation
         self.ani = animation.FuncAnimation(self.fig, self.UpdatePlot, interval=5, blit=False, repeat=False)
         self.setuptkinter()
-        #self.HideSubplot(None)
-
         #start the Datarequest
         Thread(target=self.UpdateData).start()
         self.root.mainloop()
 
     def setlabels(*args):
-        if "A" in args[0].ShownColumns:
+        if "A" in args[0].settings.ShownColumns:
             args[0].ax.set_xlabel(args[0].title.get())
             args[0].ax.set_ylabel(args[0].ax1Ylabel)
-        if "B" in args[0].ShownColumns:
+        if "B" in args[0].settings.ShownColumns:
             args[0].ax2.set_xlabel(args[0].title.get())
             args[0].ax2.set_ylabel(args[0].ax2Ylabel)
-        if "C" in args[0].ShownColumns:
+        if "C" in args[0].settings.ShownColumns:
             args[0].ax3.set_xlabel(args[0].title.get())
             args[0].ax3.set_ylabel(args[0].ax3Ylabel)
 
@@ -261,6 +238,7 @@ class some(Settings):
                 args[0].ax3Ylabel = "U [V]"
             else:
                 args[0].ax3Ylabel = args[0].Channel3Quantityvar.get() + " [" + args[0].Channel3Unit.get() + "]"
+
         args[0].setlabels()
 
     def hide_chart(self):
@@ -384,14 +362,47 @@ class some(Settings):
         else:
             self.stop_charts()
 
-    def HideSubplot(self,subplot):     
-
+    def displaySubplots(self):
+        NumOfSubplots = len(self.settings.ShownColumns)-1            
+        currentplot = 0
         if "A" in self.settings.ShownColumns:
-            self.fig.delaxes(self.ax)
+            currentplot += 1
+            num = 100*NumOfSubplots+10+currentplot
+            self.ax = self.fig.add_subplot(num)
+            self.ax.locator_params(nbins=self.axNumOfPins)
+            self.line,  = self.ax.plot([],[], color=self.settings.line1Color, linestyle="-")
+            if self.LevelcrossingonA.get():
+                self.linelevelcrossingmin,  = self.ax.plot([],[], color="red", linestyle="-")
+                self.linelevelcrossingmax,  = self.ax.plot([],[], color="red", linestyle="-")     
+
         if "B" in self.settings.ShownColumns:
-            self.fig.delaxes(self.ax2)
+            currentplot += 1
+            num = 100*NumOfSubplots+10+currentplot
+            self.ax2 = self.fig.add_subplot(num)
+            self.ax2.locator_params(nbins=self.ax2NumOfPins)
+            self.line2,  = self.ax2.plot([],[], color=self.settings.line2Color, linestyle="-")
+            if self.LevelcrossingonB.get():
+                self.line2levelcrossingmin,  = self.ax2.plot([],[], color="red", linestyle="-")
+                self.line2levelcrossingmax,  = self.ax2.plot([],[], color="red", linestyle="-")       
+
         if "C" in self.settings.ShownColumns:
-            self.fig.delaxes(self.ax3)
+            currentplot += 1
+            num = 100*NumOfSubplots+10+currentplot
+            self.ax3 = self.fig.add_subplot(num)
+            self.ax3.locator_params(nbins=self.ax3NumOfPins)
+            self.line3,  = self.ax3.plot([],[], color=self.settings.line3Color, linestyle="-")        
+            if self.LevelcrossingonC.get():
+                self.line3levelcrossingmin,  = self.ax3.plot([],[], color="red", linestyle="-")
+                self.line3levelcrossingmax,  = self.ax3.plot([],[], color="red", linestyle="-")
+
+        self.setlabels()
+
+
+
+
+    def HideSubplot(self,subplot):     
+        for i in self.fig.get_axes():
+            self.fig.delaxes(i)
 
         if subplot in self.settings.ShownColumns:
             #hide plot
@@ -399,38 +410,10 @@ class some(Settings):
         elif subplot != None:
             #show subplot
             self.settings.ShownColumns.append(subplot)
+
+        self.displaySubplots()
             
-        NumOfSubplots = len(self.settings.ShownColumns)-1            
-        currentplot = 0
-        if "A" in self.settings.ShownColumns:
-            currentplot += 1
-            num = 100*NumOfSubplots+10+currentplot
-            self.ax = self.fig.add_subplot(num)
-            self.line,  = self.ax.plot([],[], color=self.settings.line1Color, linestyle="-")
-        if "B" in self.settings.ShownColumns:
-            currentplot += 1
-            num = 100*NumOfSubplots+10+currentplot
-            self.ax2 = self.fig.add_subplot(num)
-            self.line2,  = self.ax2.plot([],[], color=self.settings.line2Color, linestyle="-")
-        if "C" in self.settings.ShownColumns:
-            currentplot += 1
-            num = 100*NumOfSubplots+10+currentplot
-            self.ax3 = self.fig.add_subplot(num)
-            self.line3,  = self.ax3.plot([],[], color=self.settings.line3Color, linestyle="-")
-
-        if self.LevelcrossingonA.get():
-            self.linelevelcrossingmin,  = self.ax.plot([],[], color="red", linestyle="-")
-            self.linelevelcrossingmax,  = self.ax.plot([],[], color="red", linestyle="-")     
-
-        if self.LevelcrossingonB.get():
-            self.line2levelcrossingmin,  = self.ax2.plot([],[], color="red", linestyle="-")
-            self.line2levelcrossingmax,  = self.ax2.plot([],[], color="red", linestyle="-")       
-
-        if self.LevelcrossingonC.get():
-            self.line3levelcrossingmin,  = self.ax3.plot([],[], color="red", linestyle="-")
-            self.line3levelcrossingmax,  = self.ax3.plot([],[], color="red", linestyle="-")
-
-        self.setlabels()
+        
 
     def ManageLevelCrossingLines(*args):
         args[0].HideSubplot(None)
@@ -657,13 +640,13 @@ class some(Settings):
         if WidgetName == "Btype":
             value = args[0].settings.Channel2Typevar.get()
             if value == "voltage":
-                args[0].settings.settings.Channel2Type = edaqcomm.ChannelType.voltage
+                args[0].settings.Channel2Type = edaqcomm.ChannelType.voltage
             if value == "resistor":
-                args[0].settings.settings.Channel2Type = edaqcomm.ChannelType.resistor
+                args[0].settings.Channel2Type = edaqcomm.ChannelType.resistor
             if value == "inamp":
-                args[0].settings.settings.Channel2Type = edaqcomm.ChannelType.inamp
+                args[0].settings.Channel2Type = edaqcomm.ChannelType.inamp
             if value == "photo":
-                args[0].settings.settings.Channel2Type = edaqcomm.ChannelType.photo
+                args[0].settings.Channel2Type = edaqcomm.ChannelType.photo
 
         if WidgetName == "Ctype":
             value = args[0].settings.Channel3Typevar.get()
@@ -723,9 +706,10 @@ class some(Settings):
             pass
 
     def load_measurements(self):
-        self.settings.LoadSettings()
+        filedata = self.settings.LoadSettings()
         self.clear_data()
         self.HideSubplot(None)
+        self.settings.LoadSetup(filedata)
 
 
     def setuptkinter(self):
@@ -862,57 +846,69 @@ class some(Settings):
                 #print(1/(time.time()-a),"   ",time.process_time(),"    ",time.perf_counter())
 
     def UpdatePlot(self,i):
-        # here we manage the level crossing lines
-        if self.LevelcrossingonA.get():
-            # Generate the line "data"
-            levelcrossingmin = np.zeros(self.settings.timeframepoints) + self.settings.LevelCrossingLevelA - self.settings.LevelCrossingHystA
-            levelcrossingmax = np.zeros(self.settings.timeframepoints) + self.settings.LevelCrossingLevelA + self.settings.LevelCrossingHystA
-            #setup levelcrossing lines
-            self.linelevelcrossingmin.set_data(self.plotdata[:,0],levelcrossingmin)
-            self.linelevelcrossingmax.set_data(self.plotdata[:,0],levelcrossingmax)
+        if not self.pause:
+            if "A" in self.settings.ShownColumns:
+                # here we manage the level crossing lines
+                if self.LevelcrossingonA.get():
+                    # Generate the line "data"
+                    levelcrossingmin = np.zeros(self.settings.timeframepoints) + self.settings.LevelCrossingLevelA - self.settings.LevelCrossingHystA
+                    levelcrossingmax = np.zeros(self.settings.timeframepoints) + self.settings.LevelCrossingLevelA + self.settings.LevelCrossingHystA
+                    #setup levelcrossing lines
+                    self.linelevelcrossingmin.set_data(self.plotdata[:,0],levelcrossingmin)
+                    self.linelevelcrossingmax.set_data(self.plotdata[:,0],levelcrossingmax)
+                
+                if self.LevelcrossingonA.get():
+                    self.LevelCrossingDetection("A",self.plotdata[:,1],self.settings.LevelCrossingHystA,self.settings.LevelCrossingLevelA,self.settings.LevelCrossingObjLenA,self.AGoingUp,self.LevelCrossingPointsA)
 
-        if self.LevelcrossingonB.get():
-            levelcrossingmin = np.zeros(self.settings.timeframepoints) + self.settings.LevelCrossingLevelB - self.settings.LevelCrossingHystB
-            levelcrossingmax = np.zeros(self.settings.timeframepoints) + self.settings.LevelCrossingLevelB + self.settings.LevelCrossingHystB
-            self.line2levelcrossingmin.set_data(self.plotdata[:,0],levelcrossingmin)
-            self.line2levelcrossingmax.set_data(self.plotdata[:,0],levelcrossingmax)
+                #updating the graph ilnes with the new data   
+                self.line.set_data(self.plotdata[:,0],self.plotdata[:,1])                
 
-        if self.LevelcrossingonC.get():
-            levelcrossingmin = np.zeros(self.settings.timeframepoints) + self.settings.LevelCrossingLevelC - self.settings.LevelCrossingHystC
-            levelcrossingmax = np.zeros(self.settings.timeframepoints) + self.settings.LevelCrossingLevelC + self.settings.LevelCrossingHystC
-            self.line3levelcrossingmin.set_data(self.plotdata[:,0],levelcrossingmin)
-            self.line3levelcrossingmax.set_data(self.plotdata[:,0],levelcrossingmax)
+                #Displaying data based on autoscale
+                if self.automatic_scaleA.get():
+                    #here I display data where the top and bottom of the graph are based on out measurements
+                    self.ax.axis([self.plotdata[0,0],self.plotdata[-1,0],min(self.plotdata[:,1]),max(self.plotdata[:,1])])
+                else:
+                    #Here the top and bottom of the graph are based on the ylimit variables
+                    self.ax.axis([self.plotdata[0,0],self.plotdata[-1,0],self.settings.ylimitAbot,self.settings.ylimitAtop])
 
-        if self.LevelcrossingonA.get():
-            self.LevelCrossingDetection("A",self.plotdata[:,1],self.settings.LevelCrossingHystA,self.settings.LevelCrossingLevelA,self.settings.LevelCrossingObjLenA,self.AGoingUp,self.LevelCrossingPointsA)
+            if "B" in self.settings.ShownColumns:
+                # here we manage the level crossing lines
+                if self.LevelcrossingonB.get():
+                    levelcrossingmin = np.zeros(self.settings.timeframepoints) + self.settings.LevelCrossingLevelB - self.settings.LevelCrossingHystB
+                    levelcrossingmax = np.zeros(self.settings.timeframepoints) + self.settings.LevelCrossingLevelB + self.settings.LevelCrossingHystB
+                    self.line2levelcrossingmin.set_data(self.plotdata[:,0],levelcrossingmin)
+                    self.line2levelcrossingmax.set_data(self.plotdata[:,0],levelcrossingmax)
 
-        if self.LevelcrossingonB.get():
-            self.LevelCrossingDetection("B",self.plotdata[:,2],self.settings.LevelCrossingHystB,self.settings.LevelCrossingLevelB,self.settings.LevelCrossingObjLenB,self.BGoingUp,self.LevelCrossingPointsB)
+                if self.LevelcrossingonB.get():
+                    self.LevelCrossingDetection("B",self.plotdata[:,2],self.settings.LevelCrossingHystB,self.settings.LevelCrossingLevelB,self.settings.LevelCrossingObjLenB,self.BGoingUp,self.LevelCrossingPointsB)
 
-        if self.LevelcrossingonC.get():
-            self.LevelCrossingDetection("C",self.plotdata[:,3],self.settings.LevelCrossingHystC,self.settings.LevelCrossingLevelC,self.settings.LevelCrossingObjLenC,self.CGoingUp,self.LevelCrossingPointsC)
+                #updating the graph ilnes with the new data   
+                self.line2.set_data(self.plotdata[:,0], self.plotdata[:,2])
 
-        #updating the graph ilnes with the new data   
-        self.line.set_data(self.plotdata[:,0],self.plotdata[:,1])
-        self.line2.set_data(self.plotdata[:,0], self.plotdata[:,2])
-        self.line3.set_data(self.plotdata[:,0], self.plotdata[:,3])
 
-        #Displaying data based on autoscale
-        if self.automatic_scaleA.get():
-            #here I display data where the top and bottom of the graph are based on out measurements
-            self.ax.axis([self.plotdata[0,0],self.plotdata[-1,0],min(self.plotdata[:,1]),max(self.plotdata[:,1])])
-        else:
-            #Here the top and bottom of the graph are based on the ylimit variables
-            self.ax.axis([self.plotdata[0,0],self.plotdata[-1,0],self.settings.ylimitAbot,self.settings.ylimitAtop])
+                if self.automatic_scaleB.get():
+                    self.ax2.axis([self.plotdata[0,0],self.plotdata[-1,0],min(self.plotdata[:,2]),max(self.plotdata[:,2])])
+                else:
+                    self.ax2.axis([self.plotdata[0,0],self.plotdata[-1,0],self.settings.ylimitBbot,self.settings.ylimitBtop])
 
-        if self.automatic_scaleB.get():
-            self.ax2.axis([self.plotdata[0,0],self.plotdata[-1,0],min(self.plotdata[:,2]),max(self.plotdata[:,2])])
-        else:
-            self.ax2.axis([self.plotdata[0,0],self.plotdata[-1,0],self.settings.ylimitBbot,self.settings.ylimitBtop])
 
-        if self.automatic_scaleC.get():
-            self.ax3.axis([self.plotdata[0,0],self.plotdata[-1,0],min(self.plotdata[:,3]),max(self.plotdata[:,3])])
-        else:
-            self.ax3.axis([self.plotdata[0,0],self.plotdata[-1,0],self.settings.ylimitCbot,self.settings.ylimitCtop])
+            if "C" in self.settings.ShownColumns:
+                # here we manage the level crossing lines        
+                if self.LevelcrossingonC.get():
+                    levelcrossingmin = np.zeros(self.settings.timeframepoints) + self.settings.LevelCrossingLevelC - self.settings.LevelCrossingHystC
+                    levelcrossingmax = np.zeros(self.settings.timeframepoints) + self.settings.LevelCrossingLevelC + self.settings.LevelCrossingHystC
+                    self.line3levelcrossingmin.set_data(self.plotdata[:,0],levelcrossingmin)
+                    self.line3levelcrossingmax.set_data(self.plotdata[:,0],levelcrossingmax)
+        
+                if self.LevelcrossingonC.get():
+                    self.LevelCrossingDetection("C",self.plotdata[:,3],self.settings.LevelCrossingHystC,self.settings.LevelCrossingLevelC,self.settings.LevelCrossingObjLenC,self.CGoingUp,self.LevelCrossingPointsC)
+
+                #updating the graph ilnes with the new data   
+                self.line3.set_data(self.plotdata[:,0], self.plotdata[:,3])
+            
+                if self.automatic_scaleC.get():
+                    self.ax3.axis([self.plotdata[0,0],self.plotdata[-1,0],min(self.plotdata[:,3]),max(self.plotdata[:,3])])
+                else:
+                    self.ax3.axis([self.plotdata[0,0],self.plotdata[-1,0],self.settings.ylimitCbot,self.settings.ylimitCtop])
 
 s = some()

@@ -65,7 +65,7 @@ class Settings():
         self.visible = True
 
         #toggle the columns that are shown
-        self.ShownColumns = ["t","B","C"]
+        self.ShownColumns = ["t","A","C"]
 
         #Popup windows for demo settings
         self.AWindow = None
@@ -132,7 +132,7 @@ class Settings():
         self.LevelcrossingonB = IntVar(name="LevelCrossingOnB",value=0)
         self.LevelcrossingonC = IntVar(name="LevelCrossingOnC",value=1)
 
-        self.LevelCrossingLevelAvar = DoubleVar(value=1.0,name="Alevel") 
+        self.LevelCrossingLevelAvar = DoubleVar(value=3.0,name="Alevel") 
         self.LevelCrossingLevelBvar = DoubleVar(value=2.0,name="Blevel")
         self.LevelCrossingLevelCvar = DoubleVar(value=1.0,name="Clevel")
 
@@ -140,7 +140,7 @@ class Settings():
         self.LevelCrossingHystBvar = DoubleVar(value=0.0,name="BHyst")
         self.LevelCrossingHystCvar = DoubleVar(value=0.5,name="CHyst")
 
-        self.LevelCrossingObjLenAvar = DoubleVar(value=0.1,name="AObjLen")
+        self.LevelCrossingObjLenAvar = DoubleVar(value=0.3,name="AObjLen")
         self.LevelCrossingObjLenBvar = DoubleVar(value=0.1,name="BObjLen")
         self.LevelCrossingObjLenCvar = DoubleVar(value=0.2,name="CObjLen")
 
@@ -451,12 +451,15 @@ class Settings():
             pass
 
 
-    def LoadSettingsA(self):
-        try:
-            openfilename = filedialog.askopenfilename(initialdir=path.curdir,title="lets open a file",filetypes=(("Xml File",".xml"),("All Files","*.*")))
-            tree = ET.parse(openfilename)
-        except:
-            return None
+    def LoadSettingsA(self,file="input"):
+        if file=="input":
+            try:
+                openfilename = filedialog.askopenfilename(initialdir=path.curdir,title="lets open a file",filetypes=(("Xml File",".xml"),("All Files","*.*")))
+                tree = ET.parse(openfilename)
+            except:
+                return None
+        else:
+            tree = ET.ElementTree(ET.fromstring(file))
         Root = tree.getroot()
         
         data = dict()
@@ -467,13 +470,11 @@ class Settings():
         for i in data:
             if data[i][1] == None:
                 data[i][1] = ""
-        print(data)
         self.Channel1Name.set(data["Name"][1])
         self.Channel1Quantityvar.set(data["Quantity"][1])
         
         if Root.attrib["type"] == "Linear":
             self.Channel1LinTherm.set("Linear")
-            print(int(data["Intercept"][1]))
             self.Channel1Intercept = float(data["Intercept"][1])
             self.Channel1Slope = float(data["Slope"][1])
             
@@ -487,12 +488,15 @@ class Settings():
         self.Channel1Unit.set(data["Unit"][1])
         self.Setquantity("A")
 
-    def LoadSettingsB(self):
-        try:
-            openfilename = filedialog.askopenfilename(initialdir=path.curdir,title="lets open a file",filetypes=(("Xml File",".xml"),("All Files","*.*")))
-            tree = ET.parse(openfilename)
-        except:
-            return None
+    def LoadSettingsB(self,file="input"):
+        if file=="input":
+            try:
+                openfilename = filedialog.askopenfilename(initialdir=path.curdir,title="lets open a file",filetypes=(("Xml File",".xml"),("All Files","*.*")))
+                tree = ET.parse(openfilename)
+            except:
+                return None
+        else:
+            tree = ET.ElementTree(ET.fromstring(file))
         Root = tree.getroot()
         
         data = dict()
@@ -521,12 +525,15 @@ class Settings():
         self.Channel2Unit.set(data["Unit"][1])
         self.Setquantity("B")
 
-    def LoadSettingsC(self):
-        try:
-            openfilename = filedialog.askopenfilename(initialdir=path.curdir,title="lets open a file",filetypes=(("Xml File",".xml"),("All Files","*.*")))
-            tree = ET.parse(openfilename)
-        except:
-            return None
+    def LoadSettingsC(self,file="input"):
+        if file=="input":
+            try:
+                openfilename = filedialog.askopenfilename(initialdir=path.curdir,title="lets open a file",filetypes=(("Xml File",".xml"),("All Files","*.*")))
+                tree = ET.parse(openfilename)
+            except:
+                return None
+        else:
+            tree = ET.ElementTree(ET.fromstring(file))
         Root = tree.getroot()
         
         data = dict()
@@ -580,20 +587,38 @@ class Settings():
         for i in Root.find("XScale"):
             data[i.tag] = [i.attrib,i.text]
 
+
         self.title.set(data["Title"][1])
         self.timeframepoints = int(data["Points"][1])
         self.timeframepointsvar.set(self.timeframepoints)
 
+        return(tree)
+
+
+    def LoadSetup(self,file="input"):
+        if file=="input":
+            try:
+                openfilename = filedialog.askopenfilename(initialdir=path.curdir,title="lets open a file",filetypes=(("Xml File",".xml"),("All Files","*.*")))
+                tree = ET.parse(openfilename)
+            except:
+                return None
+        else:
+            tree = file
+        Root = tree.getroot()
+        
         curchannel = 1
-        self.ShownColumns = ["t"]
+
+        sensornodes = []
+        for i in Root.findall("ChannelSettings"):
+            sensornodes.append(i.find("Sensor"))
+
+
         for i in Root.findall("ChannelSettings"):
             curdata = dict()
             for j in i:
                 curdata[j.tag] = [j.attrib,j.text]
             
             if curchannel == 1:
-                if curdata["IsActive"][1] == "True":
-                    self.ShownColumns.append("A")
 
                 if curdata["IsAutoscaled"][1] == "True":
                     self.automatic_scaleA.set(1)
@@ -614,8 +639,107 @@ class Settings():
 
                 self.Channel1Type = int(curdata["SensorInterfacing"][1])
                 self.Channel1Typevar.set(curdata["SensorInterfacing"][0]["label"])
+                
+                self.LoadSettingsA(ET.tostring(sensornodes[0],encoding="utf-8",method="xml"))
 
-                print(self.Channel1Typevar,self.Channel1Type)
+                self.LevelCrossingObjLenA = float(curdata["ObjectLength"][1])
+                self.LevelCrossingObjLenAvar.set(self.LevelCrossingObjLenA)
+                
+                for k in i.find("LevelCrossingDetector"):
+                    curdata[k.tag] = [k.attrib,k.text]
+
+                self.LevelCrossingLevelA = float(curdata['Level'][1])
+                self.LevelCrossingLevelAvar.set(self.LevelCrossingLevelA)
+
+                self.LevelCrossingHystA = float(curdata['Hysteresis'][1])
+                self.LevelCrossingHystAvar.set(self.LevelCrossingHystA)
+
+                if curdata["IsActive"][1] == "True":
+                    self.LevelcrossingonA.set(1)
+                else:
+                    self.LevelcrossingonA.set(0)
+
+            if curchannel == 2:
+
+                if curdata["IsAutoscaled"][1] == "True":
+                    self.automatic_scaleB.set(1)
+                elif curdata["IsAutoscaled"][1] == "False":
+                    self.automatic_scaleB.set(0)
+
+                self.ylimitBbot = float(curdata["YMin"][1])
+                self.ylimitBbotvar.set(self.ylimitBbot)
+
+                self.ylimitBtop = float(curdata["YMax"][1])
+                self.ylimitBtopvar.set(self.ylimitBtop)
+
+                colorstring = curdata["Colour"][0]["description"]
+                colorlist = [x.split("=")[-1] for x in colorstring.split(",")]
+                colorlist = [int(x.split("]")[0]) for x in colorlist]
+                newcolor = "#%02x%02x%02x" % (colorlist[0],colorlist[1],colorlist[2])
+                self.line2Color = newcolor
+
+                self.Channel2Type = int(curdata["SensorInterfacing"][1])
+                self.Channel2Typevar.set(curdata["SensorInterfacing"][0]["label"])
+                
+                self.LoadSettingsB(ET.tostring(sensornodes[1],encoding="utf-8",method="xml"))
+
+                self.LevelCrossingObjLenB = float(curdata["ObjectLength"][1])
+                self.LevelCrossingObjLenBvar.set(self.LevelCrossingObjLenB)
+                
+                for k in i.find("LevelCrossingDetector"):
+                    curdata[k.tag] = [k.attrib,k.text]
+
+                self.LevelCrossingLevelB = float(curdata['Level'][1])
+                self.LevelCrossingLevelBvar.set(self.LevelCrossingLevelB)
+
+                self.LevelCrossingHystB = float(curdata['Hysteresis'][1])
+                self.LevelCrossingHystBvar.set(self.LevelCrossingHystB)
+
+                if curdata["IsActive"][1] == "True":
+                    self.LevelcrossingonB.set(1)
+                else:
+                    self.LevelcrossingonB.set(0)
+
+            if curchannel == 3:
+
+                if curdata["IsAutoscaled"][1] == "True":
+                    self.automatic_scaleC.set(1)
+                elif curdata["IsAutoscaled"][1] == "False":
+                    self.automatic_scaleC.set(0)
+
+                self.ylimitCbot = float(curdata["YMin"][1])
+                self.ylimitCbotvar.set(self.ylimitCbot)
+
+                self.ylimitCtop = float(curdata["YMax"][1])
+                self.ylimitCtopvar.set(self.ylimitCtop)
+
+                colorstring = curdata["Colour"][0]["description"]
+                colorlist = [x.split("=")[-1] for x in colorstring.split(",")]
+                colorlist = [int(x.split("]")[0]) for x in colorlist]
+                newcolor = "#%02x%02x%02x" % (colorlist[0],colorlist[1],colorlist[2])
+                self.line3Color = newcolor
+
+                self.Channel3Type = int(curdata["SensorInterfacing"][1])
+                self.Channel3Typevar.set(curdata["SensorInterfacing"][0]["label"])
+                
+                self.LoadSettingsC(ET.tostring(sensornodes[2],encoding="utf-8",method="xml"))
+
+                self.LevelCrossingObjLenC = float(curdata["ObjectLength"][1])
+                self.LevelCrossingObjLenCvar.set(self.LevelCrossingObjLenC)
+                
+                for k in i.find("LevelCrossingDetector"):
+                    curdata[k.tag] = [k.attrib,k.text]
+
+                self.LevelCrossingLevelC = float(curdata['Level'][1])
+                self.LevelCrossingLevelCvar.set(self.LevelCrossingLevelC)
+
+                self.LevelCrossingHystC = float(curdata['Hysteresis'][1])
+                self.LevelCrossingHystCvar.set(self.LevelCrossingHystC)
+
+                if curdata["IsActive"][1] == "True":
+                    self.LevelcrossingonC.set(1)
+                else:
+                    self.LevelcrossingonC.set(0)
 
             curchannel += 1
         
