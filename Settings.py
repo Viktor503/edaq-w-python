@@ -1,5 +1,5 @@
 from os import name, path
-from tkinter import IntVar, StringVar, DoubleVar, Tk
+from tkinter import IntVar, StringVar, DoubleVar, BooleanVar, Tk
 from xml.dom import minidom
 import xml.etree.ElementTree as ET
 from tkinter import filedialog
@@ -66,6 +66,12 @@ class Settings():
 
         #toggle the columns that are shown
         self.ShownColumns = ["t","A","C"]
+
+        #Shown channels (variables for the menu checkboxes)
+        self.AisShown = BooleanVar(name="Aon")
+        self.BisShown = BooleanVar(name="Bon")
+        self.CisShown = BooleanVar(name="Con")
+
 
         #Popup windows for demo settings
         self.AWindow = None
@@ -252,7 +258,7 @@ class Settings():
 
         if savetofile:
             try:
-                filename = filedialog.asksaveasfilename(initialdir=path.curdir,title="Save file",filetypes=(("Xml File",".xml"),("All Files","*.*")))
+                filename = filedialog.asksaveasfilename(initialdir=path.curdir,title="Save A sensor settings",filetypes=(("Xml File",".xml"),("All Files","*.*")))
 
                 with open(filename,"w") as f:
                     f.write(xml_str)
@@ -286,7 +292,7 @@ class Settings():
 
         if savetofile:
             try:
-                filename = filedialog.asksaveasfilename(initialdir=path.curdir,title="Save file",filetypes=(("Xml File",".xml"),("All Files","*.*")))
+                filename = filedialog.asksaveasfilename(initialdir=path.curdir,title="Save B sensor settings",filetypes=(("Xml File",".xml"),("All Files","*.*")))
 
                 with open(filename,"w") as f:
                     f.write(xml_str)
@@ -319,7 +325,7 @@ class Settings():
 
         if savetofile:
             try:
-                filename = filedialog.asksaveasfilename(initialdir=path.curdir,title="Save file",filetypes=(("Xml File",".xml"),("All Files","*.*")))
+                filename = filedialog.asksaveasfilename(initialdir=path.curdir,title="Save C sensor settings",filetypes=(("Xml File",".xml"),("All Files","*.*")))
 
                 with open(filename,"w") as f:
                     f.write(xml_str)
@@ -443,7 +449,7 @@ class Settings():
         Measurements.appendChild(sensorb)
         Measurements.appendChild(sensorc)'''
         try:
-            filename = filedialog.asksaveasfilename(initialdir=path.curdir,title="Save file",filetypes=(("Xml File",".xml"),("All Files","*.*")))
+            filename = filedialog.asksaveasfilename(initialdir=path.curdir,title="Save Settings file",filetypes=(("Xml File",".xml"),("All Files","*.*")))
             xml_str = Root.toprettyxml(indent="\t")
             with open(filename,"w") as f:
                 f.write(xml_str)
@@ -454,7 +460,7 @@ class Settings():
     def LoadSettingsA(self,file="input"):
         if file=="input":
             try:
-                openfilename = filedialog.askopenfilename(initialdir=path.curdir,title="lets open a file",filetypes=(("Xml File",".xml"),("All Files","*.*")))
+                openfilename = filedialog.askopenfilename(initialdir=path.curdir,title="Load A sensor settings",filetypes=(("Xml File",".xml"),("All Files","*.*")))
                 tree = ET.parse(openfilename)
             except:
                 return None
@@ -491,7 +497,7 @@ class Settings():
     def LoadSettingsB(self,file="input"):
         if file=="input":
             try:
-                openfilename = filedialog.askopenfilename(initialdir=path.curdir,title="lets open a file",filetypes=(("Xml File",".xml"),("All Files","*.*")))
+                openfilename = filedialog.askopenfilename(initialdir=path.curdir,title="Load B sensor settings",filetypes=(("Xml File",".xml"),("All Files","*.*")))
                 tree = ET.parse(openfilename)
             except:
                 return None
@@ -528,7 +534,7 @@ class Settings():
     def LoadSettingsC(self,file="input"):
         if file=="input":
             try:
-                openfilename = filedialog.askopenfilename(initialdir=path.curdir,title="lets open a file",filetypes=(("Xml File",".xml"),("All Files","*.*")))
+                openfilename = filedialog.askopenfilename(initialdir=path.curdir,title="Save C sensor settings",filetypes=(("Xml File",".xml"),("All Files","*.*")))
                 tree = ET.parse(openfilename)
             except:
                 return None
@@ -565,7 +571,7 @@ class Settings():
 
     def LoadSettings(self):
         try:
-            openfilename = filedialog.askopenfilename(initialdir=path.curdir,title="lets open a file",filetypes=(("Xml File",".xml"),("All Files","*.*")))
+            openfilename = filedialog.askopenfilename(initialdir=path.curdir,title="Load settings",filetypes=(("Xml File",".xml"),("All Files","*.*")))
             tree = ET.parse(openfilename)
         except:
             return None
@@ -598,7 +604,7 @@ class Settings():
     def LoadSetup(self,file="input"):
         if file=="input":
             try:
-                openfilename = filedialog.askopenfilename(initialdir=path.curdir,title="lets open a file",filetypes=(("Xml File",".xml"),("All Files","*.*")))
+                openfilename = filedialog.askopenfilename(initialdir=path.curdir,title="Load settings",filetypes=(("Xml File",".xml"),("All Files","*.*")))
                 tree = ET.parse(openfilename)
             except:
                 return None

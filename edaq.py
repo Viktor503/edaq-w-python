@@ -1,5 +1,6 @@
 from os import name
 import tkinter
+from tkinter import messagebox
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.animation as animation
@@ -92,15 +93,18 @@ class some(Settings):
         self.plotdata = np.zeros((self.settings.timeframepoints,4))
 
         self.port = "/dev/ttyUSB0"
+        self.connected = False
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.root)
         self.canvas.get_tk_widget().grid(row=1,column=0,rowspan=13)
 
-        self.setConnection()
         
         #start the animation
         self.ani = animation.FuncAnimation(self.fig, self.UpdatePlot, interval=5, blit=False, repeat=False)
         self.setuptkinter()
+
+        self.tryConnection()
+
         #start the Datarequest
         Thread(target=self.UpdateData).start()
         self.root.mainloop()
@@ -172,6 +176,9 @@ class some(Settings):
                 args[0].settings.ylimitCtop = args[0].ylimitCtopvar.get()
             except:
                 pass
+
+    def ManageShownChannels(self):
+        print(self.settings.ShownColumns)
 
     def ManageLevelCrossingVariables(*args):
             if args[1] == "Alevel" or args[1] == "AHyst" or args[1] == "AObjLen":
@@ -258,9 +265,18 @@ class some(Settings):
         self.startbutton['state'] = NORMAL
         self.SaveDataTxtButton['state'] = NORMAL
         self.SaveDataExcelButton['state'] = NORMAL
+
+        self.ConnexionMenu.entryconfig(0,state=NORMAL)
+        self.filemenu.entryconfig(1,state=NORMAL)
+        self.filemenu.entryconfig(3,state=NORMAL)
+        self.filemenu.entryconfig(4,state=NORMAL)
+        self.filemenu.entryconfig(5,state=NORMAL)
+        self.Chartmenu.entryconfig(2,state=NORMAL)
+
         self.SetChannelAType.configure(state="normal")
         self.SetChannelBType.configure(state="normal")
         self.SetChannelCType.configure(state="normal")
+        
         self.ClearDataButton['state'] = NORMAL
 
         if self.AWindow != None:
@@ -294,12 +310,14 @@ class some(Settings):
         time.sleep(0.1)
         
     def clear_data(self):
-        self.plotdata = np.zeros((self.settings.timeframepoints,4))
         self.data.clear_data()
+        print("Lefutok xd")
         self.startedat = 0
         self.startpressed = 0
         self.pausepressed = 0
         self.alltimepaused = 0
+        self.plotdata = np.zeros((self.settings.timeframepoints,4))
+        self.HideSubplot(None)
 
     def start_charts(self):
         #self.comm.startContSampling()
@@ -327,6 +345,14 @@ class some(Settings):
         self.stopbutton['state'] = NORMAL
         self.SaveDataTxtButton['state'] = DISABLED
         self.SaveDataExcelButton['state'] = DISABLED
+
+        self.ConnexionMenu.entryconfig(0,state=DISABLED)
+        self.filemenu.entryconfig(1,state=DISABLED)
+        self.filemenu.entryconfig(3,state=DISABLED)
+        self.filemenu.entryconfig(4,state=DISABLED)
+        self.filemenu.entryconfig(5,state=DISABLED)
+        self.Chartmenu.entryconfig(2,state=DISABLED)
+
         self.SetChannelAType.configure(state="disabled")
         self.SetChannelCType.configure(state="disabled")
         self.SetChannelBType.configure(state="disabled")
@@ -373,7 +399,7 @@ class some(Settings):
             self.line,  = self.ax.plot([],[], color=self.settings.line1Color, linestyle="-")
             if self.LevelcrossingonA.get():
                 self.linelevelcrossingmin,  = self.ax.plot([],[], color="red", linestyle="-")
-                self.linelevelcrossingmax,  = self.ax.plot([],[], color="red", linestyle="-")     
+                self.linelevelcrossingmax,  = self.ax.plot([],[], color="red", linestyle="-")
 
         if "B" in self.settings.ShownColumns:
             currentplot += 1
@@ -623,6 +649,21 @@ class some(Settings):
                 self.EntryChannelCUnit['state'] = DISABLED
                 self.EditCSensorButton['state'] = DISABLED
 
+    def popupmenu(self,buttpress):
+        self.Chartmenu.tk_popup(buttpress.x_root,buttpress.y_root)
+
+    def SaveDataAsImage(self):
+        try:
+            filename = filedialog.asksaveasfilename(initialdir=path.curdir,title="Save Image",filetypes=(("Png",".png"),("Svg",".svg"),("All Files","*.*")))
+            plt.savefig(filename)
+        except:
+            pass
+
+    def Copydata(self):
+        print(self.plotdata)
+        df = pd.DataFrame(self.plotdata,columns=['t','A','B','C'])
+        df = df[self.ShownColumns]
+        df.to_clipboard(index=False,header=True)
 
     def ManageChannelTypes(*args):
         WidgetName = args[1]
@@ -724,7 +765,7 @@ class some(Settings):
         self.ChartVisibleButton = Button(self.root,text="make disappear",command=self.hide_chart)
         self.ClearDataButton = Button(self.root,text="Reset Charts",command=self.clear_data)
         self.SaveDataTxtButton = Button(self.root,text="Save Data to txt",command=lambda: self.data.save_data(self.settings.ShownColumns,"txt"))
-        self.SaveDataExcelButton = Button(self.root,text="Save Data to excel",command=lambda: self.data.save_data(self.settings.ShownColumns,"excel"))
+        self.SaveDataExcelButton = Button(self.root,text="Save Data to excel",command=lambda: self.data.save_data(self.settings.ShownColumns,"xlsx"))
         self.HideSubplotA = Button(self.root,text="HideSubplotA",command=lambda: self.HideSubplot("A"))
         self.HideSubplotB = Button(self.root,text="HideSubplotB",command=lambda: self.HideSubplot("B"))
         self.HideSubplotC = Button(self.root,text="HideSubplotC",command=lambda: self.HideSubplot("C"))
@@ -738,6 +779,13 @@ class some(Settings):
         self.BSensorSettings = Button(self.root,text="Set B channel variables",command=self.openBWindow)
         self.CSensorSettings = Button(self.root,text="Set C channel variables",command=self.openCWindow)
 
+        #Setting up right click menu bar
+        self.Chartmenu = Menu(self.root,tearoff=False)
+        self.Chartmenu.add_command(label="Save as image",command=self.SaveDataAsImage)
+        self.Chartmenu.add_command(label="Save to excel",command=lambda: self.data.save_data(self.settings.ShownColumns,"xlsx"))
+        self.Chartmenu.add_command(label="Copy to clipboard",command=self.Copydata)
+        self.Chartmenu.add_command(label="Reset", command=self.clear_data)
+
 
         #Setting up the menu bar
         self.menubar = Menu(self.root,background="#565656")
@@ -746,12 +794,12 @@ class some(Settings):
         self.SaveSensorMenu = Menu(self.filemenu,tearoff=0)
         self.LoadSensorMenu = Menu(self.filemenu,tearoff=0)
 
-        self.ConnexionMenu.add_command(label="Rescan devices    Ctrl+R")
+        self.ConnexionMenu.add_command(label="Rescan devices    Ctrl+R",command=self.tryConnection)
         self.menubar.add_cascade(label="Connexion",menu=self.ConnexionMenu)
 
-        self.SaveSensorMenu.add_command(label="From Channel A   Ctrl+shift+A",command=lambda: self.settings.SaveA(True))
-        self.SaveSensorMenu.add_command(label="From Channel B   Ctrl+shift+B",command=lambda: self.settings.SaveB(True))
-        self.SaveSensorMenu.add_command(label="From Channel C   Ctrl+shift+C",command=lambda: self.settings.SaveC(True))
+        self.SaveSensorMenu.add_command(label="From Channel A   Ctrl+alt+A",command=lambda: self.settings.SaveA(True))
+        self.SaveSensorMenu.add_command(label="From Channel B   Ctrl+alt+B",command=lambda: self.settings.SaveB(True))
+        self.SaveSensorMenu.add_command(label="From Channel C   Ctrl+alt+C",command=lambda: self.settings.SaveC(True))
         self.filemenu.add_cascade(label="Save Sensor...",menu=self.SaveSensorMenu)
 
         self.LoadSensorMenu.add_command(label="To Channel A   Alt+A",command=self.settings.LoadSettingsA)
@@ -761,15 +809,16 @@ class some(Settings):
         self.filemenu.add_cascade(label="Load sensor from file...",menu=self.LoadSensorMenu)
         self.filemenu.add_command(label="Save Measurment setup...   Ctrl+S",command=self.settings.SaveSettings)
         self.filemenu.add_command(label="Load Measurment setup...   Ctrl+L",command=self.load_measurements)
-        self.filemenu.add_command(label="Save Measurment data...    Ctrl+D",command=lambda: self.data.save_data(self.settings.ShownColumns,"txt"))
+        self.filemenu.add_command(label="Save Measurment data to txt...    Ctrl+D",command=lambda: self.data.save_data(self.settings.ShownColumns,"txt"))
+        self.filemenu.add_command(label="Save Measurment data to xlsx...    Ctrl+E",command=lambda: self.data.save_data(self.settings.ShownColumns,"xlsx"))
         self.menubar.add_cascade(label="File",menu=self.filemenu)
 
         self.menubar.add_command(label="Start/Stop",command=self.start_or_stop_charts)
         self.menubar.add_command(label="Reset Charts",command=self.clear_data)
         self.menubar.add_separator()
-        self.menubar.add_checkbutton(label="A")
-        self.menubar.add_checkbutton(label="B")
-        self.menubar.add_checkbutton(label="C")
+        self.menubar.add_checkbutton(label="A",onvalue=1,offvalue=0,variable=self.settings.AisShown,command=self.ManageShownChannels)
+        self.menubar.add_checkbutton(label="B",onvalue=1,offvalue=0,variable=self.settings.BisShown,command=self.ManageShownChannels)
+        self.menubar.add_checkbutton(label="C",onvalue=1,offvalue=0,variable=self.settings.CisShown,command=self.ManageShownChannels)
         self.root.config(menu=self.menubar)
 
         self.EntrySamplingFreq = Entry(self.root,textvariable=self.samplingfreqval)
@@ -800,6 +849,23 @@ class some(Settings):
         self.BSensorSettings.grid(row=8,column=2)
         self.CSensorSettings.grid(row=9,column=2)
 
+        #Configuring keyboard shortcuts
+        self.canvas.get_tk_widget().bind("<Button-3>",self.popupmenu)
+
+        self.root.bind("<Control-s>",lambda event: self.settings.SaveSettings())
+        self.root.bind("<Control-r>",lambda event: self.tryConnection())
+        
+        self.root.bind("<Control-Alt-a>",lambda event: self.settings.SaveA(True))
+        self.root.bind("<Control-Alt-b>",lambda event: self.settings.SaveB(True))
+        self.root.bind("<Control-Alt-c>",lambda event: self.settings.SaveC(True))
+        
+        self.root.bind("<Alt-a>",lambda event: self.settings.LoadSettingsA())
+        self.root.bind("<Alt-b>",lambda event: self.settings.LoadSettingsB())
+        self.root.bind("<Alt-c>",lambda event: self.settings.LoadSettingsC())
+
+        self.root.bind("<Control-l>",lambda event: self.settings.LoadSettings())
+        self.root.bind("<Control-d>",lambda event: self.data.save_data(self.ShownColumns,"txt"))
+        self.root.bind("<Control-e>",lambda event: self.data.save_data(self.ShownColumns,"xlsx"))
 
         Label(self.root,text="Sampling").grid(row=1,column=3)
         Label(self.root,text="Sampling frequency [Hz]").grid(row=2,column=3)
@@ -816,14 +882,38 @@ class some(Settings):
         self.EntryRefreshRate.grid(row=13,column=3)
 
 
+    def tryConnection(self):
+        if not self.connected:
+            for i in range(5):
+                newport = "/dev/ttyUSB" + str(i)
+                try:
+                    self.setConnection(newport)
+                    if self.connected == True:
+                        print("Edaq found")
+                        #Enable start button and freq settings
+                        self.startbutton["state"] = NORMAL
+                        self.menubar.entryconfig(3,state=NORMAL)
+                        self.EntrySamplingFreq["state"] = NORMAL
+                        return 0
+                except:
+                    pass
+            print("Couldn't find edaq")
+            messagebox.showerror("Error","Couldn't find edaq device")
+            #Disable start button and freq settings
+            self.startbutton["state"] = DISABLED
+            self.menubar.entryconfig(3,state=DISABLED)
+            self.EntrySamplingFreq["state"] = DISABLED
+        else:
+            print("Edaq already connected")
 
-    def setConnection(self):
-        self.comm = edaqcomm.Edaq530Comm(self.port)
+
+    def setConnection(self,port):
+        self.comm = edaqcomm.Edaq530Comm(port)
         self.comm.connect()
         self.comm.flushBuffers()
         self.comm.setInputs(edaqcomm.ChannelType.voltage,
             edaqcomm.ChannelType.voltage, edaqcomm.ChannelType.voltage)
-
+        self.connected = True
         #self.comm.setSamplingFreq(1000)
 
     

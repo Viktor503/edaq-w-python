@@ -18,7 +18,7 @@ class DataManager():
             except:
                 pass
             
-        elif format == "excel":
+        elif format == "xlsx":
             try:
                 filename = filedialog.asksaveasfilename(initialdir=path.curdir,title="Save file",filetypes=(("Text File",".xlsx"),("All Files","*.*")))
                 self.df.to_excel(filename,index=False,columns=savecolumns)
