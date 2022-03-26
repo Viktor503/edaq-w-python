@@ -65,12 +65,12 @@ class Settings():
         self.visible = True
 
         #toggle the columns that are shown
-        self.ShownColumns = ["t","A","C"]
+        self.ShownColumns = ["t","A","B","C"]
 
         #Shown channels (variables for the menu checkboxes)
-        self.AisShown = BooleanVar(name="Aon")
-        self.BisShown = BooleanVar(name="Bon")
-        self.CisShown = BooleanVar(name="Con")
+        self.AisShown = BooleanVar(name="Aon",value= "A" in self.ShownColumns)
+        self.BisShown = BooleanVar(name="Bon",value= "B" in self.ShownColumns)
+        self.CisShown = BooleanVar(name="Con",value= "C" in self.ShownColumns)
 
 
         #Popup windows for demo settings
@@ -128,6 +128,14 @@ class Settings():
         self.Channel2ProbeRes = 10000
         self.Channel3ProbeRes = 10000
 
+        self.HystData = {"A":[],"B":[],"C":[]}
+        self.LatestHystData = {"A":['','',''],"B":['','',''],"C":['','','']}
+
+        self.AGoingUp = IntVar(value=1)
+        self.BGoingUp = IntVar(value=1)
+        self.CGoingUp = IntVar(value=1)
+
+
         #setting automatic y axis scaling
         self.automatic_scaleA = IntVar(name="AutomaticScaleA",value=0)
         self.automatic_scaleB = IntVar(name="AutomaticScaleB",value=1)
@@ -135,7 +143,7 @@ class Settings():
 
         #Level crossing detection variables
         self.LevelcrossingonA = IntVar(name="LevelCrossingOnA",value=1)
-        self.LevelcrossingonB = IntVar(name="LevelCrossingOnB",value=0)
+        self.LevelcrossingonB = IntVar(name="LevelCrossingOnB",value=1)
         self.LevelcrossingonC = IntVar(name="LevelCrossingOnC",value=1)
 
         self.LevelCrossingLevelAvar = DoubleVar(value=3.0,name="Alevel") 
@@ -394,7 +402,7 @@ class Settings():
             Autocsale2 = self.AddElement(Root,Channel2Settings,"IsAutoscaled","False")
         Ymin2 = self.AddElement(Root,Channel2Settings,"YMin",self.ylimitBbot)
         Ymax2 = self.AddElement(Root,Channel2Settings,"YMax",self.ylimitBtop)
-        rgb2 = [int(self.line2Color[i+1:i+3],26) for i in range(0,5,2)]
+        rgb2 = [int(self.line2Color[i+1:i+3],16) for i in range(0,5,2)]
         color2 = self.AddElementWAttr(Root,Channel2Settings,"Colour",{"description":"Colour [R={}, G={}, B={}]".format(rgb2[0],rgb2[1],rgb2[2])},"")
         sensorinterface = self.AddElementWAttr(Root,Channel2Settings,"SensorInterfacing",{"label":self.Channel2Typevar.get()},self.Channel2Type)
 
@@ -425,7 +433,7 @@ class Settings():
             Autocsale3 = self.AddElement(Root,Channel3Settings,"IsAutoscaled","False")
         Ymin3 = self.AddElement(Root,Channel3Settings,"YMin",self.ylimitCbot)
         Ymax3 = self.AddElement(Root,Channel3Settings,"YMax",self.ylimitCtop)
-        rgb3 = [int(self.line3Color[i+1:i+3],36) for i in range(0,5,2)]
+        rgb3 = [int(self.line3Color[i+1:i+3],16) for i in range(0,5,2)]
         color3 = self.AddElementWAttr(Root,Channel3Settings,"Colour",{"description":"Colour [R={}, G={}, B={}]".format(rgb3[0],rgb3[1],rgb3[2])},"")
         sensorinterface = self.AddElementWAttr(Root,Channel3Settings,"SensorInterfacing",{"label":self.Channel3Typevar.get()},self.Channel3Type)
 

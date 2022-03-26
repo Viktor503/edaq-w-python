@@ -1,6 +1,9 @@
 from os import name
 import tkinter
 from tkinter import messagebox
+from tkinter import ttk
+from tkinter.font import nametofont
+from turtle import width
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.animation as animation
@@ -18,15 +21,44 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 class some(Settings):
     def __init__(self):
         self.root = Tk()
+        '''
+        img = PhotoImage(file="catgirl.png")
+        for i in range(5):
+            for j in range(20):
+                backg = Label(self.root,image=img)
+                backg.place(x=i*318,y=j*443)
+        '''
         #load default settings
         Settings.__init__(self)
         self.fig = plt.figure()
+        
 
         self.data = DataManager()
         self.settings = Settings()
 
+        #setting up the nescessary base for tkinter
+        self.mainNotebook = ttk.Notebook(self.root)
+        self.mainNotebook.grid(row=1,column=0,rowspan=13)
+        self.GraphFrame = Frame(self.mainNotebook)
+        self.NumbersFrame = Frame(self.mainNotebook)
+
+        self.GraphFrame.pack(fill="both",expand=1)
+        self.NumbersFrame.pack(fill="both",expand=1)
+
+        self.mainNotebook.add(self.GraphFrame,text="Charts")
+        self.mainNotebook.add(self.NumbersFrame,text="Meters")
+
+        self.mainNotebook.grid(row=1,column=0,rowspan=13)
+
+        self.setquantityvars()
+
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self.GraphFrame)
+
+        self.canvas.get_tk_widget().grid(row=0,column=0,rowspan=len(self.settings.ShownColumns)-1,sticky="ns")
+
         #initializing channel subplots and number of pins
         self.displaySubplots()
+
         
         self.settings.Channel1Typevar.trace("w",self.ManageChannelTypes)
         self.settings.Channel2Typevar.trace("w",self.ManageChannelTypes)
@@ -85,20 +117,12 @@ class some(Settings):
         self.LevelCrossingPointsC = [[None,None],[None,None]]
 
         # Time [s]    Period [s]   Speed [m/s]
-        self.HystData = {"A":{"Times [s]": [],"Period [s]": [], "Speed [m/s]": []},"B":{"Times [s]": [],"Period [s]": [], "Speed [m/s]": []},"C":{"Times [s]": [],"Period [s]": [], "Speed [m/s]": []}}
-        self.AGoingUp = IntVar(value=1)
-        self.BGoingUp = IntVar(value=1)
-        self.CGoingUp = IntVar(value=1)
-
+        
         self.plotdata = np.zeros((self.settings.timeframepoints,4))
 
         self.port = "/dev/ttyUSB0"
         self.connected = False
 
-        self.canvas = FigureCanvasTkAgg(self.fig, master=self.root)
-        self.canvas.get_tk_widget().grid(row=1,column=0,rowspan=13)
-
-        
         #start the animation
         self.ani = animation.FuncAnimation(self.fig, self.UpdatePlot, interval=5, blit=False, repeat=False)
         self.setuptkinter()
@@ -108,6 +132,8 @@ class some(Settings):
         #start the Datarequest
         Thread(target=self.UpdateData).start()
         self.root.mainloop()
+
+        
 
     def setlabels(*args):
         if "A" in args[0].settings.ShownColumns:
@@ -119,6 +145,8 @@ class some(Settings):
         if "C" in args[0].settings.ShownColumns:
             args[0].ax3.set_xlabel(args[0].title.get())
             args[0].ax3.set_ylabel(args[0].ax3Ylabel)
+
+
 
     def ManageSamplingFreq(*args):
         try:
@@ -177,8 +205,14 @@ class some(Settings):
             except:
                 pass
 
-    def ManageShownChannels(self):
-        print(self.settings.ShownColumns)
+    def ManageShownChannels(self,subplot):
+        self.HideSubplot(subplot)
+        '''
+        print(self.AisShown,self.AisShown.get())
+        print(self.BisShown,self.BisShown.get())
+        print(self.CisShown,self.CisShown.get())
+        '''
+        
 
     def ManageLevelCrossingVariables(*args):
             if args[1] == "Alevel" or args[1] == "AHyst" or args[1] == "AObjLen":
@@ -228,6 +262,7 @@ class some(Settings):
                     args[0].Channel2Unit.set("°C")
                 args[0].ax2Ylabel = args[0].Channel2Quantityvar.get() + " [" + args[0].Channel2Unit.get() + "]"
             if args[0].Channel2Quantityvar.get() == "":
+                args[0].Channel2Quantityvar.set("U")
                 args[0].ax2Ylabel = "U [V]"
             else:
                 args[0].ax2Ylabel = args[0].Channel2Quantityvar.get() + " [" + args[0].Channel2Unit.get() + "]"
@@ -242,6 +277,7 @@ class some(Settings):
                     args[0].Channel3Unit.set("°C")
                 args[0].ax3Ylabel = args[0].Channel3Quantityvar.get() + " [" + args[0].Channel3Unit.get() + "]"
             if args[0].Channel3Quantityvar.get() == "":
+                args[0].Channel3Quantityvar.set("U")
                 args[0].ax3Ylabel = "U [V]"
             else:
                 args[0].ax3Ylabel = args[0].Channel3Quantityvar.get() + " [" + args[0].Channel3Unit.get() + "]"
@@ -311,12 +347,13 @@ class some(Settings):
         
     def clear_data(self):
         self.data.clear_data()
-        print("Lefutok xd")
         self.startedat = 0
         self.startpressed = 0
         self.pausepressed = 0
         self.alltimepaused = 0
         self.plotdata = np.zeros((self.settings.timeframepoints,4))
+        self.HystData = {"A":[],"B":[],"C":[]}
+        self.LatestHystData = {"A":['','',''],"B":['','',''],"C":['','','']}
         self.HideSubplot(None)
 
     def start_charts(self):
@@ -388,15 +425,27 @@ class some(Settings):
         else:
             self.stop_charts()
 
+    def setquantityvars(self):
+        if self.Channel1Quantityvar.get() == "":
+            self.Channel1Quantityvar.set("U")
+        if self.Channel2Quantityvar.get() == "":
+            self.Channel2Quantityvar.set("U")
+        if self.Channel3Quantityvar.get() == "":
+            self.Channel3Quantityvar.set("U")
+
     def displaySubplots(self):
-        NumOfSubplots = len(self.settings.ShownColumns)-1            
+        NumOfSubplots = len(self.settings.ShownColumns)-1
+        self.NumbersFrame.rowconfigure(NumOfSubplots,weight=1)
+        self.NumbersFrame.columnconfigure(1,weight=1)       
         currentplot = 0
         if "A" in self.settings.ShownColumns:
             currentplot += 1
             num = 100*NumOfSubplots+10+currentplot
             self.ax = self.fig.add_subplot(num)
             self.ax.locator_params(nbins=self.axNumOfPins)
-            self.line,  = self.ax.plot([],[], color=self.settings.line1Color, linestyle="-")
+            self.line,  = self.ax.plot([],[], color=self.settings.line1Color, linestyle="-")         
+            self.Alabel = Label(self.NumbersFrame,font=("Trebuchet MS",60),justify=LEFT,anchor="w",width=11,fg=self.line1Color,text="%s = 0 %s" % (self.Channel1Quantityvar.get(),self.Channel1Unit.get()))
+            self.Alabel.grid(row=currentplot,column=1,sticky="nsw")
             if self.LevelcrossingonA.get():
                 self.linelevelcrossingmin,  = self.ax.plot([],[], color="red", linestyle="-")
                 self.linelevelcrossingmax,  = self.ax.plot([],[], color="red", linestyle="-")
@@ -407,6 +456,8 @@ class some(Settings):
             self.ax2 = self.fig.add_subplot(num)
             self.ax2.locator_params(nbins=self.ax2NumOfPins)
             self.line2,  = self.ax2.plot([],[], color=self.settings.line2Color, linestyle="-")
+            self.Blabel = Label(self.NumbersFrame,justify=LEFT,anchor="w",width=11,font=("Trebuchet MS",60),fg=self.line2Color,text="%s = 0 %s" % (self.Channel2Quantityvar.get(),self.Channel2Unit.get()))
+            self.Blabel.grid(row=currentplot,column=1,sticky="nsw")
             if self.LevelcrossingonB.get():
                 self.line2levelcrossingmin,  = self.ax2.plot([],[], color="red", linestyle="-")
                 self.line2levelcrossingmax,  = self.ax2.plot([],[], color="red", linestyle="-")       
@@ -417,18 +468,53 @@ class some(Settings):
             self.ax3 = self.fig.add_subplot(num)
             self.ax3.locator_params(nbins=self.ax3NumOfPins)
             self.line3,  = self.ax3.plot([],[], color=self.settings.line3Color, linestyle="-")        
+            self.Clabel = Label(self.NumbersFrame,font=("Trebuchet MS",60),justify=LEFT,anchor="w",width=11,fg=self.line3Color,text="%s = 0 %s" % (self.Channel3Quantityvar.get(),self.Channel3Unit.get()))
+            self.Clabel.grid(row=currentplot,column=1,sticky="nsw")
             if self.LevelcrossingonC.get():
                 self.line3levelcrossingmin,  = self.ax3.plot([],[], color="red", linestyle="-")
                 self.line3levelcrossingmax,  = self.ax3.plot([],[], color="red", linestyle="-")
 
         self.setlabels()
+        if (self.LevelcrossingonA.get() == 1 and "A" in self.settings.ShownColumns) or (self.LevelcrossingonB.get() == 1 and "B" in self.settings.ShownColumns) or (self.LevelcrossingonC.get() == 1 and "C" in self.settings.ShownColumns):
+            self.OpenLevelCrossingCharts()
+            self.fig.tight_layout()
 
-
-
-
-    def HideSubplot(self,subplot):     
+    def HideSubplot(self,subplot):  
+        #delete all subplots from the chart   
         for i in self.fig.get_axes():
             self.fig.delaxes(i)
+
+        #delete all labels from the meters frame
+        for i in self.NumbersFrame.winfo_children():
+            i.destroy()
+        
+        #save last rows of the tables
+        for i in self.LatestHystData:
+            if self.LatestHystData[i] != ['','','']:
+                if len(self.HystData[i]) == 0:
+                    self.HystData[i].append(list(self.LatestHystData[i]))
+                elif self.LatestHystData[i] != self.HystData[i][-1]:
+                    self.HystData[i].append(list(self.LatestHystData[i]))
+            else:
+                pass
+
+        for i in self.HystData:
+            print(i)
+            print(self.HystData[i])
+
+        #get rid of elements in graph frame
+        for i in self.GraphFrame.winfo_children():
+            if type(i) != tkinter.Canvas:
+                i.destroy()
+            else:
+                i.grid_forget()
+
+            #print(i)
+            ''' for line in self.tree.get_children():
+                self.tree.item(line)['values']'''
+            #i.grid_forget()
+
+        
 
         if subplot in self.settings.ShownColumns:
             #hide plot
@@ -436,7 +522,10 @@ class some(Settings):
         elif subplot != None:
             #show subplot
             self.settings.ShownColumns.append(subplot)
-
+        rspan = len(self.settings.ShownColumns)-1
+        if rspan == 0:
+            rspan += 1
+        self.canvas.get_tk_widget().grid(row=0,column=0,rowspan=rspan,sticky="ns")
         self.displaySubplots()
             
         
@@ -457,6 +546,81 @@ class some(Settings):
             self.ColorC['bg'] = color
 
         self.HideSubplot(None)
+
+    def OpenLevelCrossingCharts(self):   
+        self.columnwidth = 80 
+
+        self.columns = ('Time [s]','Period [s]','Speed [m/s]')
+
+        nametofont("TkHeadingFont").configure(size=8)
+
+        # define headings
+        
+        self.tree = ttk.Treeview(self.GraphFrame, columns=self.columns,height=1, show='headings')
+        self.tree.heading('Time [s]', text='Time [s]')
+        self.tree.heading('Period [s]', text='Period [s]')
+        self.tree.heading('Speed [m/s]', text='Speed [m/s]')
+        self.tree.column('Time [s]',width=self.columnwidth)
+        self.tree.column('Period [s]',width=self.columnwidth)
+        self.tree.column('Speed [m/s]',width=self.columnwidth)
+
+        self.tree1 = ttk.Treeview(self.GraphFrame, columns=self.columns,height=1, show='headings')
+        self.tree1.heading('Time [s]', text='Time [s]')
+        self.tree1.heading('Period [s]', text='Period [s]')
+        self.tree1.heading('Speed [m/s]', text='Speed [m/s]')
+        self.tree1.column('Time [s]',width=self.columnwidth)
+        self.tree1.column('Period [s]',width=self.columnwidth)
+        self.tree1.column('Speed [m/s]',width=self.columnwidth)
+
+        self.tree2 = ttk.Treeview(self.GraphFrame, columns=self.columns,height=1, show='headings')
+        self.tree2.heading('Time [s]', text='Time [s]')
+        self.tree2.heading('Period [s]', text='Period [s]')
+        self.tree2.heading('Speed [m/s]', text='Speed [m/s]')
+        self.tree2.column('Time [s]',width=self.columnwidth)
+        self.tree2.column('Period [s]',width=self.columnwidth)
+        self.tree2.column('Speed [m/s]',width=self.columnwidth)
+
+        self.tree.tag_configure('oddrow',background="white")
+        self.tree.tag_configure('evenrow',background=self.line1Color)
+        self.tree1.tag_configure('oddrow',background="white")
+        self.tree1.tag_configure('evenrow',background=self.line2Color)
+        self.tree2.tag_configure('oddrow',background="white")
+        self.tree2.tag_configure('evenrow',background=self.line3Color)
+
+
+        curchart = 0
+        if "A" in self.settings.ShownColumns: 
+            for i in range(len(self.HystData["A"])):
+                if i % 2 == 0:
+                    self.tree.insert('',END, values=self.HystData["A"][i],tags=('evenrow',))
+                else:
+                    self.tree.insert('',END, values=self.HystData["A"][i],tags=('oddrow',))
+            self.tree.grid(row=curchart, column=1, sticky='nsew')
+            if len(self.HystData["A"]) > 0:
+                del self.HystData["A"][-1]
+            curchart+=1
+
+        if "B" in self.settings.ShownColumns:
+            for i in range(len(self.HystData["B"])):
+                if i % 2 == 0:
+                    self.tree1.insert('',END, values=self.HystData["B"][i],tags=('evenrow',))
+                else:
+                    self.tree1.insert('',END, values=self.HystData["B"][i],tags=('oddrow',))
+            self.tree1.grid(row=curchart, column=1, sticky='nsew')
+            if len(self.HystData["B"]) > 0:
+                del self.HystData["B"][-1]
+            curchart+=1
+
+        if "C" in self.settings.ShownColumns:
+            for i in range(len(self.HystData["C"])):
+                if i % 2 == 0:
+                    self.tree2.insert('',END, values=self.HystData["C"][i],tags=('evenrow',))
+                else:
+                    self.tree2.insert('',END, values=self.HystData["C"][i],tags=('oddrow',))
+            self.tree2.grid(row=curchart, column=1, sticky='nsew')
+            if len(self.HystData["C"]) > 0:
+                del self.HystData["C"][-1]
+
 
     def openAWindow(self):
         if self.AWindow == None or not(tkinter.Toplevel.winfo_exists(self.AWindow)):
@@ -660,9 +824,8 @@ class some(Settings):
             pass
 
     def Copydata(self):
-        print(self.plotdata)
         df = pd.DataFrame(self.plotdata,columns=['t','A','B','C'])
-        df = df[self.ShownColumns]
+        df = df[self.settings.ShownColumns]
         df.to_clipboard(index=False,header=True)
 
     def ManageChannelTypes(*args):
@@ -705,6 +868,42 @@ class some(Settings):
     def LineIntersectsLevel(self,x1,y1,x2,y2,level):
         return round((((x2-x1)*(level-y1))/(y2-y1))+x1,3)
           
+    def InsertToChart(self,channel,prop,value):
+        if prop != 0:
+            self.LatestHystData[channel][prop] = value
+        else:
+            self.LatestHystData[channel][0] = value
+            self.LatestHystData[channel][1] = ''
+            self.LatestHystData[channel][2] = ''
+        if channel == "A":
+            if prop == 0:
+                if len(self.tree.get_children()) % 2  == 0:
+                    self.tree.insert('',END, values=self.LatestHystData[channel],tags=("evenrow",))
+                else:
+                    self.tree.insert('',END, values=self.LatestHystData[channel],tags=("oddrow",))
+            if prop != 0:
+                last_id = self.tree.get_children()[-1]
+                self.tree.item(last_id,values=self.LatestHystData[channel]) 
+
+        if channel == "B":
+            if prop == 0:
+                if len(self.tree1.get_children()) % 2  == 0:
+                    self.tree1.insert('',END, values=self.LatestHystData[channel],tags=("evenrow",))
+                else:
+                    self.tree1.insert('',END, values=self.LatestHystData[channel],tags=("oddrow",))
+            if prop != 0:
+                last_id = self.tree1.get_children()[-1]
+                self.tree1.item(last_id,values=self.LatestHystData[channel]) 
+        
+        if channel == "C":
+            if prop == 0:
+                if len(self.tree2.get_children()) % 2  == 0:
+                    self.tree2.insert('',END, values=self.LatestHystData[channel],tags=("evenrow",))
+                else:
+                    self.tree2.insert('',END, values=self.LatestHystData[channel],tags=("oddrow",))
+            if prop != 0:
+                last_id = self.tree2.get_children()[-1]
+                self.tree2.item(last_id,values=self.LatestHystData[channel]) 
 
     def LevelCrossingDetection(self,channel,y,hyst,level,objlen,goingup,points):        
         x = self.plotdata[:,0]
@@ -714,26 +913,28 @@ class some(Settings):
             if goingup.get()==0:
 
                 intersect = self.LineIntersectsLevel(points[0][0],points[0][1],points[1][0],points[1][1],level)
-                Speed = objlen/(intersect-self.HystData[channel]["Times [s]"][-1])
-                self.HystData[channel]["Speed [m/s]"].append(Speed)
-                
-                print(channel+" lement: "+ str(self.LineIntersectsLevel(points[1][0],points[1][1],points[0][0],points[0][1],level)))
-                print(self.HystData[channel])
+                Speed = objlen/(intersect-self.LatestHystData[channel][0])
+                self.InsertToChart(channel,2,Speed)                
+                #print(channel+" lement: "+ str(self.LineIntersectsLevel(points[1][0],points[1][1],points[0][0],points[0][1],level)))
+
             goingup.set(1)
 
         #check if we got through the top hyst  
         if y[-1]>(level+hyst):
             points[1] = [x[-1],y[-1]]
             if goingup.get():
+                #Time [s], Period[s]
                 #we crossed the top hyst add time[s] and period[s]
                 intersect = self.LineIntersectsLevel(points[1][0],points[1][1],points[0][0],points[0][1],level)
-                if len(self.HystData[channel]["Times [s]"]) != 0:
-                    new_period = intersect-self.HystData[channel]["Times [s]"][-1]
-                    self.HystData[channel]["Period [s]"].append(new_period)
-                self.HystData[channel]["Times [s]"].append(intersect)
+                if self.LatestHystData[channel][0] != '':
+                    new_period = intersect-self.LatestHystData[channel][0]
+                    #insert Period[s]
+                    self.InsertToChart(channel,1,new_period)    
+                    self.HystData[channel].append(list(self.LatestHystData[channel]))
+                #insert the Time [s],
+                self.InsertToChart(channel,0,intersect)
 
-                print(channel+" fölment: "+ str(self.LineIntersectsLevel(points[0][0],points[0][1],points[1][0],points[1][1],level)))
-                print(self.HystData[channel])
+                #print(channel+" fölment: "+ str(self.LineIntersectsLevel(points[0][0],points[0][1],points[1][0],points[1][1],level)))
             goingup.set(0)
           
             
@@ -756,7 +957,8 @@ class some(Settings):
     def setuptkinter(self):
         #setting up visual and interactive elements
         self.root.geometry("700x300")
-        self.root["bg"] = 'Blue'
+        
+        self.root["bg"] = "blue"
         self.root.title("Edaq függvény demo")
         label = Label(self.root,text="Mérés:")
         label.grid(row=0)
@@ -816,9 +1018,9 @@ class some(Settings):
         self.menubar.add_command(label="Start/Stop",command=self.start_or_stop_charts)
         self.menubar.add_command(label="Reset Charts",command=self.clear_data)
         self.menubar.add_separator()
-        self.menubar.add_checkbutton(label="A",onvalue=1,offvalue=0,variable=self.settings.AisShown,command=self.ManageShownChannels)
-        self.menubar.add_checkbutton(label="B",onvalue=1,offvalue=0,variable=self.settings.BisShown,command=self.ManageShownChannels)
-        self.menubar.add_checkbutton(label="C",onvalue=1,offvalue=0,variable=self.settings.CisShown,command=self.ManageShownChannels)
+        self.menubar.add_checkbutton(label="A",onvalue=1,offvalue=0,variable=self.settings.AisShown,command=lambda: self.ManageShownChannels("A"))
+        self.menubar.add_checkbutton(label="B",onvalue=1,offvalue=0,variable=self.settings.BisShown,command=lambda: self.ManageShownChannels("B"))
+        self.menubar.add_checkbutton(label="C",onvalue=1,offvalue=0,variable=self.settings.CisShown,command=lambda: self.ManageShownChannels("C"))
         self.root.config(menu=self.menubar)
 
         self.EntrySamplingFreq = Entry(self.root,textvariable=self.samplingfreqval)
@@ -864,8 +1066,8 @@ class some(Settings):
         self.root.bind("<Alt-c>",lambda event: self.settings.LoadSettingsC())
 
         self.root.bind("<Control-l>",lambda event: self.settings.LoadSettings())
-        self.root.bind("<Control-d>",lambda event: self.data.save_data(self.ShownColumns,"txt"))
-        self.root.bind("<Control-e>",lambda event: self.data.save_data(self.ShownColumns,"xlsx"))
+        self.root.bind("<Control-d>",lambda event: self.data.save_data(self.settings.ShownColumns,"txt"))
+        self.root.bind("<Control-e>",lambda event: self.data.save_data(self.settings.ShownColumns,"xlsx"))
 
         Label(self.root,text="Sampling").grid(row=1,column=3)
         Label(self.root,text="Sampling frequency [Hz]").grid(row=2,column=3)
@@ -952,7 +1154,7 @@ class some(Settings):
 
                 #updating the graph ilnes with the new data   
                 self.line.set_data(self.plotdata[:,0],self.plotdata[:,1])                
-
+                self.Alabel['text'] = "%s = %s %s" % (self.Channel1Quantityvar.get(),str(round(self.plotdata[-1][1],2)),self.Channel1Unit.get())
                 #Displaying data based on autoscale
                 if self.automatic_scaleA.get():
                     #here I display data where the top and bottom of the graph are based on out measurements
@@ -975,6 +1177,7 @@ class some(Settings):
                 #updating the graph ilnes with the new data   
                 self.line2.set_data(self.plotdata[:,0], self.plotdata[:,2])
 
+                self.Blabel['text'] = "%s = %s %s" % (self.Channel2Quantityvar.get(),str(round(self.plotdata[-1][2],2)),self.Channel2Unit.get())
 
                 if self.automatic_scaleB.get():
                     self.ax2.axis([self.plotdata[0,0],self.plotdata[-1,0],min(self.plotdata[:,2]),max(self.plotdata[:,2])])
@@ -996,6 +1199,8 @@ class some(Settings):
                 #updating the graph ilnes with the new data   
                 self.line3.set_data(self.plotdata[:,0], self.plotdata[:,3])
             
+                self.Clabel['text'] = "%s = %s %s" % (self.Channel3Quantityvar.get(),str(round(self.plotdata[-1][3],2)),self.Channel3Unit.get())
+
                 if self.automatic_scaleC.get():
                     self.ax3.axis([self.plotdata[0,0],self.plotdata[-1,0],min(self.plotdata[:,3]),max(self.plotdata[:,3])])
                 else:

@@ -1,31 +1,31 @@
 <?xml version="1.0" ?>
 <Measurement>
-	<SamplingFrequency unit="Hz">20.0</SamplingFrequency>
-	<RefreshInterval unit="ms">100.0</RefreshInterval>
-	<Averages>4</Averages>
+	<SamplingFrequency unit="Hz">10.0</SamplingFrequency>
+	<RefreshInterval unit="ms">50.0</RefreshInterval>
+	<Averages>-1</Averages>
 	<XScale>
-		<Title>krumpli</Title>
-		<Points>40</Points>
+		<Title>t [s]</Title>
+		<Points>20</Points>
 	</XScale>
 	<DataBufferSize>100000</DataBufferSize>
 	<ChannelSettings>
 		<Name>A</Name>
 		<IsActive>True</IsActive>
-		<IsAutoscaled>True</IsAutoscaled>
-		<YMin>-1.0</YMin>
-		<YMax>3.0</YMax>
-		<Colour description="Colour [R=0, G=0, B=255]"/>
-		<SensorInterfacing label="resistor">1</SensorInterfacing>
+		<IsAutoscaled>False</IsAutoscaled>
+		<YMin>0.0</YMin>
+		<YMax>2.0</YMax>
+		<Colour description="Colour [R=255, G=166, B=0]"/>
+		<SensorInterfacing label="voltage">0</SensorInterfacing>
 		<Sensor type="Linear">
 			<Name>Jani</Name>
-			<Quantity/>
-			<Unit>V</Unit>
+			<Quantity>U</Quantity>
+			<Unit>G</Unit>
 			<Intercept>2</Intercept>
 			<Slope>1.2</Slope>
 		</Sensor>
-		<ObjectLength>0.1</ObjectLength>
+		<ObjectLength>0.3</ObjectLength>
 		<LevelCrossingDetector>
-			<Level>1.0</Level>
+			<Level>3.0</Level>
 			<Hysteresis>0.25</Hysteresis>
 			<IsActive>True</IsActive>
 		</LevelCrossingDetector>
@@ -36,11 +36,11 @@
 		<IsAutoscaled>True</IsAutoscaled>
 		<YMin>-1.0</YMin>
 		<YMax>6.0</YMax>
-		<Colour description="Colour [R=0, G=255, B=3]"/>
+		<Colour description="Colour [R=0, G=181, B=3]"/>
 		<SensorInterfacing label="resistor">1</SensorInterfacing>
 		<Sensor type="Linear">
 			<Name>Janetta</Name>
-			<Quantity/>
+			<Quantity>U</Quantity>
 			<Unit>V</Unit>
 			<Intercept>0</Intercept>
 			<Slope>1</Slope>
@@ -49,16 +49,16 @@
 		<LevelCrossingDetector>
 			<Level>2.0</Level>
 			<Hysteresis>0.0</Hysteresis>
-			<IsActive>False</IsActive>
+			<IsActive>True</IsActive>
 		</LevelCrossingDetector>
 	</ChannelSettings>
 	<ChannelSettings>
 		<Name>C</Name>
-		<IsActive>False</IsActive>
-		<IsAutoscaled>True</IsAutoscaled>
+		<IsActive>True</IsActive>
+		<IsAutoscaled>False</IsAutoscaled>
 		<YMin>-1.0</YMin>
 		<YMax>6.0</YMax>
-		<Colour description="Colour [R=4, G=190, B=255]"/>
+		<Colour description="Colour [R=4, G=90, B=209]"/>
 		<SensorInterfacing label="voltage">0</SensorInterfacing>
 		<Sensor type="Thermistor">
 			<Name>Jeromos</Name>
@@ -75,7 +75,7 @@
 		<LevelCrossingDetector>
 			<Level>1.0</Level>
 			<Hysteresis>0.5</Hysteresis>
-			<IsActive>False</IsActive>
+			<IsActive>True</IsActive>
 		</LevelCrossingDetector>
 	</ChannelSettings>
 </Measurement>
