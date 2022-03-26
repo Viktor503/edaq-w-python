@@ -498,21 +498,12 @@ class some(Settings):
             else:
                 pass
 
-        for i in self.HystData:
-            print(i)
-            print(self.HystData[i])
-
         #get rid of elements in graph frame
         for i in self.GraphFrame.winfo_children():
             if type(i) != tkinter.Canvas:
                 i.destroy()
             else:
                 i.grid_forget()
-
-            #print(i)
-            ''' for line in self.tree.get_children():
-                self.tree.item(line)['values']'''
-            #i.grid_forget()
 
         
 
@@ -547,6 +538,18 @@ class some(Settings):
 
         self.HideSubplot(None)
 
+    def ClearLcData(self,channel):
+        self.HystData[channel] = []
+        self.LatestHystData[channel] = ['','','']
+        self.HideSubplot(None)
+
+    def CopyLcData(self,channel):
+        data = self.HystData[channel]
+        data.append(self.LatestHystData[channel])
+        df = pd.DataFrame(data,columns=['Time [s]','Period [s]','Speed [m/s]'])
+        df.to_clipboard(index=False,header=True)
+
+
     def OpenLevelCrossingCharts(self):   
         self.columnwidth = 80 
 
@@ -562,7 +565,11 @@ class some(Settings):
         self.tree.heading('Speed [m/s]', text='Speed [m/s]')
         self.tree.column('Time [s]',width=self.columnwidth)
         self.tree.column('Period [s]',width=self.columnwidth)
-        self.tree.column('Speed [m/s]',width=self.columnwidth)
+        self.tree.column('Speed [m/s]',width=self.columnwidth)      
+        self.tree.bind("<Button-3>",lambda event: self.LCPopupMenu(event,"A"))
+
+        self.scrollbar = ttk.Scrollbar(self.GraphFrame, orient=VERTICAL, command=self.tree.yview)
+        self.tree.configure(yscroll=self.scrollbar.set)
 
         self.tree1 = ttk.Treeview(self.GraphFrame, columns=self.columns,height=1, show='headings')
         self.tree1.heading('Time [s]', text='Time [s]')
@@ -571,6 +578,10 @@ class some(Settings):
         self.tree1.column('Time [s]',width=self.columnwidth)
         self.tree1.column('Period [s]',width=self.columnwidth)
         self.tree1.column('Speed [m/s]',width=self.columnwidth)
+        self.tree1.bind("<Button-3>",lambda event: self.LCPopupMenu(event,"B"))
+
+        self.scrollbar1 = ttk.Scrollbar(self.GraphFrame, orient=VERTICAL, command=self.tree1.yview)
+        self.tree1.configure(yscroll=self.scrollbar1.set)
 
         self.tree2 = ttk.Treeview(self.GraphFrame, columns=self.columns,height=1, show='headings')
         self.tree2.heading('Time [s]', text='Time [s]')
@@ -579,6 +590,10 @@ class some(Settings):
         self.tree2.column('Time [s]',width=self.columnwidth)
         self.tree2.column('Period [s]',width=self.columnwidth)
         self.tree2.column('Speed [m/s]',width=self.columnwidth)
+        self.tree2.bind("<Button-3>",lambda event: self.LCPopupMenu(event,"C"))
+
+        self.scrollbar2 = ttk.Scrollbar(self.GraphFrame, orient=VERTICAL, command=self.tree2.yview)
+        self.tree2.configure(yscroll=self.scrollbar2.set)
 
         self.tree.tag_configure('oddrow',background="white")
         self.tree.tag_configure('evenrow',background=self.line1Color)
@@ -596,6 +611,7 @@ class some(Settings):
                 else:
                     self.tree.insert('',END, values=self.HystData["A"][i],tags=('oddrow',))
             self.tree.grid(row=curchart, column=1, sticky='nsew')
+            self.scrollbar.grid(row=curchart, column=2, sticky='ns')
             if len(self.HystData["A"]) > 0:
                 del self.HystData["A"][-1]
             curchart+=1
@@ -607,6 +623,7 @@ class some(Settings):
                 else:
                     self.tree1.insert('',END, values=self.HystData["B"][i],tags=('oddrow',))
             self.tree1.grid(row=curchart, column=1, sticky='nsew')
+            self.scrollbar1.grid(row=curchart, column=2, sticky='ns')
             if len(self.HystData["B"]) > 0:
                 del self.HystData["B"][-1]
             curchart+=1
@@ -618,6 +635,7 @@ class some(Settings):
                 else:
                     self.tree2.insert('',END, values=self.HystData["C"][i],tags=('oddrow',))
             self.tree2.grid(row=curchart, column=1, sticky='nsew')
+            self.scrollbar2.grid(row=curchart, column=2, sticky='ns')
             if len(self.HystData["C"]) > 0:
                 del self.HystData["C"][-1]
 
@@ -816,6 +834,14 @@ class some(Settings):
     def popupmenu(self,buttpress):
         self.Chartmenu.tk_popup(buttpress.x_root,buttpress.y_root)
 
+    def LCPopupMenu(self,buttpress,channel):
+        if channel == "A":
+            self.LcChart.tk_popup(buttpress.x_root,buttpress.y_root)
+        if channel == "B":
+            self.LcChart1.tk_popup(buttpress.x_root,buttpress.y_root)
+        if channel == "C":
+            self.LcChart2.tk_popup(buttpress.x_root,buttpress.y_root)
+
     def SaveDataAsImage(self):
         try:
             filename = filedialog.asksaveasfilename(initialdir=path.curdir,title="Save Image",filetypes=(("Png",".png"),("Svg",".svg"),("All Files","*.*")))
@@ -987,6 +1013,19 @@ class some(Settings):
         self.Chartmenu.add_command(label="Save to excel",command=lambda: self.data.save_data(self.settings.ShownColumns,"xlsx"))
         self.Chartmenu.add_command(label="Copy to clipboard",command=self.Copydata)
         self.Chartmenu.add_command(label="Reset", command=self.clear_data)
+
+        #Setting up Lc menu bar
+        self.LcChart = Menu(self.root,tearoff=False)
+        self.LcChart.add_command(label="Copy data to clipboard",command=lambda: self.CopyLcData("A"))
+        self.LcChart.add_command(label="clear",command=lambda: self.ClearLcData("A"))
+
+        self.LcChart1 = Menu(self.root,tearoff=False)
+        self.LcChart1.add_command(label="Copy data to clipboard",command=lambda: self.CopyLcData("B"))
+        self.LcChart1.add_command(label="clear",command=lambda: self.ClearLcData("B"))
+
+        self.LcChart2 = Menu(self.root,tearoff=False)
+        self.LcChart2.add_command(label="Copy data to clipboard",command=lambda: self.CopyLcData("C"))
+        self.LcChart2.add_command(label="clear",command=lambda: self.ClearLcData("C"))
 
 
         #Setting up the menu bar
