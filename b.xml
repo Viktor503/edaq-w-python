@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <Sensor type="Linear">
-	<Name>Janetta</Name>
+	<Name>Masodik</Name>
 	<Quantity/>
 	<Unit>V</Unit>
 	<Intercept>0</Intercept>
