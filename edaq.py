@@ -21,13 +21,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 class some(Settings):
     def __init__(self):
         self.root = Tk()
-        '''
-        img = PhotoImage(file="catgirl.png")
-        for i in range(5):
-            for j in range(20):
-                backg = Label(self.root,image=img)
-                backg.place(x=i*318,y=j*443)
-        '''
+
         #load default settings
         Settings.__init__(self)
         self.fig = plt.figure()
