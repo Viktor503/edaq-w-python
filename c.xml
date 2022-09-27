@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <Sensor type="Thermistor">
-	<Name>Jeromos</Name>
+	<Name>Harmadik</Name>
 	<Quantity>T</Quantity>
 	<Unit>°C</Unit>
 	<Coefficient unit="K">3977</Coefficient>
