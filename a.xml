@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <Sensor type="Linear">
-	<Name>Jani</Name>
+	<Name>Elso</Name>
 	<Quantity/>
 	<Unit>G</Unit>
 	<Intercept>2</Intercept>
