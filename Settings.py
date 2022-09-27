@@ -8,7 +8,7 @@ import edaqcomm
 class Settings():
     def __init__(self):
         if __name__ == "__main__":
-            self.root = Tk() # Take out later **************
+            self.root = Tk()
 
         self.axNumOfPins = 5
         self.ax2NumOfPins = 5
